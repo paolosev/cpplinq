@@ -46,10 +46,6 @@ protected:
     virtual void run() = 0;
     void yield(bool goOn);
 
-    bool hasStarted() const {
-        return _state != FiberCreated;
-    }
-
 private:
     static void WINAPI fiberProc(void* lpFiberParameter);
 

@@ -26,12 +26,13 @@ class IteratorBlock : public IEnumerable<TSource>,
 public:
     // IEnumerable
     virtual std::shared_ptr<IEnumerator<TSource>> GetEnumerator() {
-        if (::GetCurrentThreadId() == _threadId && ! hasStarted()) { 
+        if (::GetCurrentThreadId() == _threadId && ! _enumeratorCreated) {
+            _enumeratorCreated = true;
             return std::dynamic_pointer_cast<IEnumerator<TSource>>(shared_from_this());
         }
 
-        std::shared_ptr<IteratorBlock<TSource>> clone = Clone();
-        return clone->GetEnumerator();
+        std::shared_ptr<IteratorBlock<TSource>> cloned = clone();
+        return cloned->GetEnumerator();
     }
 
     // IEnumerator
@@ -59,15 +60,17 @@ public:
 protected:
     IteratorBlock() :
         _current(),
+        _enumeratorCreated(false),
         _threadId(::GetCurrentThreadId())
     {
     }
     virtual ~IteratorBlock() {}
 
-    virtual std::shared_ptr<IteratorBlock<TSource>> Clone() const = 0;
+    virtual std::shared_ptr<IteratorBlock<TSource>> clone() const = 0;
 
 private:
     TSource _current;
+    bool _enumeratorCreated;
     DWORD _threadId;
 };
 
@@ -109,7 +112,7 @@ protected:
         _f->run(this);
     }
 
-    virtual std::shared_ptr<IteratorBlock<TSource>> Clone() const {
+    virtual std::shared_ptr<IteratorBlock<TSource>> clone() const {
         return std::shared_ptr<IteratorBlock<TSource>>(new _IteratorBlock<TSource>(*this));
     }
 
